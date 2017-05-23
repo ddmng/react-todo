@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 //import logo from './logo.svg';
 import './App.css';
-
-
+import firebase from 'firebase';
+import ReactFireMixin from 'reactfire'
+import reactMixin from 'react-mixin'
 
 class App extends Component {
   render() {
@@ -20,20 +21,34 @@ class App extends Component {
   }
 }
 
+var config = {
+  apiKey: "AIzaSyCdxGmqWURL8YUfGPK3OVANsyvsE0cHV5s",
+  authDomain: "reactfiretodoapp.firebaseapp.com",
+  databaseURL: "https://reactfiretodoapp.firebaseio.com"
+};
+firebase.initializeApp(config);
+
+
 class FilterableTodoPage extends React.Component {
+
   constructor(props) {
     super(props);
 
     this.handleFilterTextInput = this.handleFilterTextInput.bind(this);
     this.handleNewTodoChange = this.handleNewTodoChange.bind(this);
     this.handleAddButtonClick = this.handleAddButtonClick.bind(this);
-    this.handleCheckChange = this.handleCheckChange.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
 
     this.state = {
       filterText: '',
       newTodoText: '',
       elements: []
     };
+  }
+
+  componentWillMount() {
+    var firebaseRef = firebase.database().ref('todoApp/items');
+    this.bindAsArray(firebaseRef.limitToLast(25), 'elements');
   }
 
   handleFilterTextInput(filterText) {
@@ -50,24 +65,21 @@ class FilterableTodoPage extends React.Component {
 
   handleAddButtonClick() {
     var newKey = 1 + Math.max.apply(Math, this.state.elements.map( (e) => e.id ) );
-    this.state.elements.push({id: newKey>0?newKey:1, checked: false, text: this.state.newTodoText});
-
+    //this.state.elements.push({id: newKey>0?newKey:1, checked: false, text: this.state.newTodoText});
+    if (this.state.newTodoText && this.state.newTodoText.trim().length !== 0) {
+      this.firebaseRefs['elements'].push({
+        text: this.state.newTodoText
+      });
+    }
     this.setState({
       newTodoText: ''
     });
   }
 
-  handleCheckChange(key, newValue) {
-    var ind = this.state.elements.findIndex( (e) => e.id == key )
-    console.log("ind " + ind + " new value " + newValue);
-
-    var els = this.state.elements
-
-    if(ind >= 0)
-      els[ind].checked = newValue
-
-    this.setState({elements: els})
-    console.dir(this.state.elements)
+  handleDelete(key) {
+    console.log("delete: " + key);
+    var firebaseRef = firebase.database().ref('todoApp/items');
+    firebaseRef.child(key).remove();
   }
 
   render() {
@@ -92,7 +104,7 @@ class FilterableTodoPage extends React.Component {
         <div className="row">
           <div className="col-md-4">
             <div className="form-group">
-              <TodoElements handleCheckChange={this.handleCheckChange}
+              <TodoElements handleDelete={this.handleDelete}
                             filterText={this.state.filterText}
                             elements={this.state.elements}/>
             </div>
@@ -147,8 +159,8 @@ class TodoElements extends React.Component {
       (e) => e.text.includes(this.props.filterText)
     ).map(
       (e) =>
-          <li key={e.id}>
-            <TodoItem id={e.id} handleCheckChange={this.props.handleCheckChange} checked={e.checked} text={e.text} />
+          <li key={e['.key']}>
+            <TodoItem id={e['.key']} handleDelete={this.props.handleDelete} text={e.text} />
           </li>
     );
 
@@ -163,25 +175,22 @@ class TodoElements extends React.Component {
 class TodoItem extends React.Component {
   constructor(props) {
       super(props);
-      this.handleCheckChange = this.handleCheckChange.bind(this);
+      this.handleDelete = this.handleDelete.bind(this);
   }
 
-  handleCheckChange(e) {
-    this.props.handleCheckChange(e.target.id, e.target.checked)
+  handleDelete(e) {
+    this.props.handleDelete(e.target.id)
   }
 
   render() {
-    var canceled = this.props.checked?"strike":""
     return (
       <div className="checkbox">
         <label>
-          <input  type="checkbox"
+          <input  type="button"
                   id={this.props.id}
-                  onChange={this.handleCheckChange}
-                  value={this.props.checked}
-                  /> <span className={canceled}>
-                    {this.props.text}
-                  </span>
+                  onClick={this.handleDelete}
+                  value="X"
+                  /> {this.props.text}
         </label>
       </div>
     )
@@ -226,5 +235,6 @@ class TodoAdd extends React.Component {
   }
 }
 
+reactMixin(FilterableTodoPage.prototype, ReactFireMixin)
 
 export default App;
