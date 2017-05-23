@@ -201,23 +201,22 @@ class TodoAdd extends React.Component {
   }
 
   handleAddButtonClick(e) {
-    e.preventDefault();
     this.props.handleAddButtonClick()
+    e.preventDefault();
   }
-
 
   render() {
     return (
       <form className="form-inline">
         <div className="form-group">
-          <input placeholder="New todo text"
+          <input placeholder="Enter text for a new todo..."
                   className="form-control"
                   type="text"
                   value={this.props.newTodoText}
                   onChange={this.handleNewTodoChange}/>
           {' '}
           <input  className="btn btn-default"
-                  type="button"
+                  type="submit"
                   value="Add"
                   onClick={this.handleAddButtonClick}
                   />
