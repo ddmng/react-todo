@@ -5,6 +5,9 @@ import firebase from 'firebase';
 import ReactFireMixin from 'reactfire'
 import reactMixin from 'react-mixin'
 
+var th = jQuery(".typeahead");
+
+
 class App extends Component {
   render() {
     return (
@@ -34,6 +37,8 @@ var config = {
 };
 firebase.initializeApp(config);
 
+var carsRef;
+
 
 class FilterableTodoPage extends React.Component {
 
@@ -48,13 +53,23 @@ class FilterableTodoPage extends React.Component {
     this.state = {
       filterText: '',
       newTodoText: '',
-      elements: []
+      elements: [],
+      cars: []
     };
   }
-
   componentWillMount() {
     var firebaseRef = firebase.database().ref('todoApp/items');
     this.bindAsArray(firebaseRef.limitToLast(25), 'elements');
+
+    carsRef = firebase.database().ref('automotive/cars');
+    // this.bindAsArray(carsRef.limitToLast(25), 'cars');
+    carsRef.orderByKey().on("child_added",
+      (snapshot) => {
+        this.state.cars.push( {
+          brand: snapshot.key,
+          models: snapshot.val()
+        })
+      })
   }
 
   handleFilterTextInput(filterText) {
@@ -67,6 +82,22 @@ class FilterableTodoPage extends React.Component {
     this.setState({
       newTodoText: newTodoText
     });
+
+    var sugg = newTodoText.trim().length > 0 && this.suggestCarBrand(newTodoText);
+    console.dir(sugg)
+  }
+
+  suggestCarBrand(s) {
+    console.log("Requested suggest for " + s);
+    var els = this.state.cars.filter( e => e.brand.toLowerCase().startsWith(s.toLowerCase()) ).map( e => e.brand)
+
+    return els.length > 0 && els
+    // if(els[0]) {
+    //   var models = els[0].models
+    //   var dummy = models[Object.keys(models)[0]]
+    //   var makes = dummy[Object.keys(dummy)[0]]
+    //   return makes
+    // } else { return  false }
   }
 
   handleAddButtonClick() {
@@ -159,8 +190,8 @@ class TodoFilterBox extends React.Component {
 
 class TodoElements extends React.Component {
   render () {
-    console.log("rendering "+ this.props.elements.length + " elements")
-    this.props.elements.forEach( (e) => console.log(e));
+    //console.log("rendering "+ this.props.elements.length + " elements")
+    //this.props.elements.forEach( (e) => console.log(e));
     const items = this.props.elements.filter(
       (e) => e.text.includes(this.props.filterText)
     ).map(

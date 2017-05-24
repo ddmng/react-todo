@@ -34,6 +34,8 @@ firebase = pyrebase.initialize_app(config)
 
 # Get a reference to the database service
 db = firebase.database()
-db.child("cars").push(cars)
+# res = [db.child("automotive/cars").push(c) for c in cars]
 
-print("Data pushed")
+res = [db.child("automotive/cars/" + str(c.keys()[0].encode('utf-8')) ).push( c[c.keys()[0]] ) for c in cars]
+
+print("Data pushed: ", res)
