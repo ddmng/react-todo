@@ -22,9 +22,15 @@ class App extends Component {
 }
 
 var config = {
-  apiKey: "AIzaSyCdxGmqWURL8YUfGPK3OVANsyvsE0cHV5s",
-  authDomain: "reactfiretodoapp.firebaseapp.com",
-  databaseURL: "https://reactfiretodoapp.firebaseio.com"
+  apiKey: "AIzaSyA_1_h0pf6c-nie41ct-rE1oQ5g-TKH-zU",
+  authDomain: "todo-94247.firebaseapp.com",
+  databaseURL: "https://todo-94247.firebaseio.com",
+  projectId: "todo-94247",
+  storageBucket: "todo-94247.appspot.com",
+  messagingSenderId: "305703722979"
+  // apiKey: "AIzaSyCdxGmqWURL8YUfGPK3OVANsyvsE0cHV5s",
+  // authDomain: "reactfiretodoapp.firebaseapp.com",
+  // databaseURL: "https://reactfiretodoapp.firebaseio.com"
 };
 firebase.initializeApp(config);
 
