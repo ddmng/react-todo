@@ -231,9 +231,12 @@ class TodoAdd extends React.Component {
   }
 
   getModelsForBrand(e) {
-    console.log("Getting models for brand " + this.state.brand)
 
-    var c = brandModels.filter( e => e.brand === this.state.brand?e.models:[] )
+    var c = brandModels.filter( e => {
+      console.log("brand " + e.brand + " " + e.models)
+      return e.brand == this.state.brand
+    })[0].models
+    
     this.setState( {
       cars: c
     })
