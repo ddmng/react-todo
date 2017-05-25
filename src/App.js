@@ -4,9 +4,8 @@ import './App.css';
 import firebase from 'firebase';
 import ReactFireMixin from 'reactfire'
 import reactMixin from 'react-mixin'
-
-var th = jQuery(".typeahead");
-
+import Autosuggest, { ListAdapter } from 'react-bootstrap-autosuggest'
+import { Button, FormGroup, FormControl } from 'react-bootstrap';
 
 class App extends Component {
   render() {
@@ -38,6 +37,12 @@ var config = {
 firebase.initializeApp(config);
 
 var carsRef;
+var carBrands = []
+carsRef = firebase.database().ref('automotive/cars');
+carsRef.orderByKey().on("child_added",
+  (snapshot) => {
+    carBrands.push(  snapshot.key  )
+  })
 
 
 class FilterableTodoPage extends React.Component {
@@ -57,6 +62,7 @@ class FilterableTodoPage extends React.Component {
       cars: []
     };
   }
+
   componentWillMount() {
     var firebaseRef = firebase.database().ref('todoApp/items');
     this.bindAsArray(firebaseRef.limitToLast(25), 'elements');
@@ -72,6 +78,7 @@ class FilterableTodoPage extends React.Component {
       })
   }
 
+
   handleFilterTextInput(filterText) {
     this.setState({
       filterText: filterText
@@ -82,22 +89,6 @@ class FilterableTodoPage extends React.Component {
     this.setState({
       newTodoText: newTodoText
     });
-
-    var sugg = newTodoText.trim().length > 0 && this.suggestCarBrand(newTodoText);
-    console.dir(sugg)
-  }
-
-  suggestCarBrand(s) {
-    console.log("Requested suggest for " + s);
-    var els = this.state.cars.filter( e => e.brand.toLowerCase().startsWith(s.toLowerCase()) ).map( e => e.brand)
-
-    return els.length > 0 && els
-    // if(els[0]) {
-    //   var models = els[0].models
-    //   var dummy = models[Object.keys(models)[0]]
-    //   var makes = dummy[Object.keys(dummy)[0]]
-    //   return makes
-    // } else { return  false }
   }
 
   handleAddButtonClick() {
@@ -171,18 +162,17 @@ class TodoFilterBox extends React.Component {
 
   render() {
     return (
-      <form className="form-inline">
-        <div className="form-group">
-          <label className="sr-only" htmlFor="filtertext">Enter filter text...</label>
-          <input  id="filtertext"
-                  placeholder="Enter filter text..."
-                  name="filter"
-                  className="form-control"
-                  type="text"
-                  value={this.props.filterText}
-                  onChange={this.handleFilterTextInputChange}
-                  />
-        </div>
+      <form>
+        <FormGroup>
+          <FormControl
+            id="filtertext"
+            type="text"
+            placeholder="Enter filter text"
+            value={this.props.filterText}
+            onChange={this.handleFilterTextInputChange}
+          />
+
+        </FormGroup>
       </form>
     )
   }
@@ -190,8 +180,6 @@ class TodoFilterBox extends React.Component {
 
 class TodoElements extends React.Component {
   render () {
-    //console.log("rendering "+ this.props.elements.length + " elements")
-    //this.props.elements.forEach( (e) => console.log(e));
     const items = this.props.elements.filter(
       (e) => e.text.includes(this.props.filterText)
     ).map(
@@ -223,11 +211,12 @@ class TodoItem extends React.Component {
     return (
       <div className="checkbox">
         <label>
-          <input  type="button"
+          <Button bsStyle="warning"
                   id={this.props.id}
                   onClick={this.handleDelete}
-                  value="X"
-                  /> {this.props.text}
+                  ><i className="fa fa-trash" aria-hidden="true"></i></Button>
+                  {' '}
+                  {this.props.text}
         </label>
       </div>
     )
@@ -243,7 +232,8 @@ class TodoAdd extends React.Component {
   }
 
   handleNewTodoChange(e) {
-    this.props.handleNewTodoChange(e.target.value)
+    //this.props.handleNewTodoChange(e.target.value)
+    this.props.handleNewTodoChange(e)
   }
 
   handleAddButtonClick(e) {
@@ -253,24 +243,32 @@ class TodoAdd extends React.Component {
 
   render() {
     return (
-      <form className="form-inline">
-        <div className="form-group">
-          <input placeholder="Enter text for a new todo..."
-                  className="form-control"
-                  type="text"
-                  value={this.props.newTodoText}
-                  onChange={this.handleNewTodoChange}/>
+      <form >
+        <FormGroup>
+          <Autosuggest inline
+            datalist={ carBrands }
+            value={this.props.newTodoText}
+            onChange={this.handleNewTodoChange}
+            placeholder="Enter a car brand"
+          />
           {' '}
-          <input  className="btn btn-default"
-                  type="submit"
-                  value="Add"
-                  onClick={this.handleAddButtonClick}
-                  />
-        </div>
+          <Autosuggest inline
+            datalist={ brandModels }
+            value={this.props.carModel}
+            onChange={this.handleCarModelChange}
+            placeholder="Enter a car model"
+          />
+          {' '}
+          <Button inline type="submit"
+                  bsStyle="primary"
+                  onClick={this.handleAddButtonClick}>Add</Button>
+
+        </FormGroup>
       </form>
     )
   }
 }
+
 
 reactMixin(FilterableTodoPage.prototype, ReactFireMixin)
 
