@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-//import logo from './logo.svg';
 import './App.css';
 import firebase from 'firebase';
 import ReactFireMixin from 'reactfire'
@@ -38,10 +37,16 @@ firebase.initializeApp(config);
 
 var carsRef;
 var carBrands = []
+var brandModels = []
+
 carsRef = firebase.database().ref('automotive/cars');
 carsRef.orderByKey().on("child_added",
   (snapshot) => {
-    carBrands.push(  snapshot.key  )
+    var k = snapshot.key
+    carBrands.push(  k  )
+    var v = snapshot.val()[Object.keys(snapshot.val())[0]]
+
+    brandModels.push({brand: k, models: v})
   })
 
 
@@ -58,26 +63,14 @@ class FilterableTodoPage extends React.Component {
     this.state = {
       filterText: '',
       newTodoText: '',
-      elements: [],
-      cars: []
+      elements: []
     };
   }
 
   componentWillMount() {
     var firebaseRef = firebase.database().ref('todoApp/items');
     this.bindAsArray(firebaseRef.limitToLast(25), 'elements');
-
-    carsRef = firebase.database().ref('automotive/cars');
-    // this.bindAsArray(carsRef.limitToLast(25), 'cars');
-    carsRef.orderByKey().on("child_added",
-      (snapshot) => {
-        this.state.cars.push( {
-          brand: snapshot.key,
-          models: snapshot.val()
-        })
-      })
   }
-
 
   handleFilterTextInput(filterText) {
     this.setState({
@@ -229,11 +222,27 @@ class TodoAdd extends React.Component {
       super(props);
       this.handleNewTodoChange = this.handleNewTodoChange.bind(this);
       this.handleAddButtonClick = this.handleAddButtonClick.bind(this);
+      this.getModelsForBrand = this.getModelsForBrand.bind(this);
+
+      this.state = {
+        brand: "",
+        cars: []
+      }
+  }
+
+  getModelsForBrand(e) {
+    console.log("Getting models for brand " + this.state.brand)
+
+    var c = brandModels.filter( e => e.brand === this.state.brand?e.models:[] )
+    this.setState( {
+      cars: c
+    })
+    console.dir(c)
   }
 
   handleNewTodoChange(e) {
-    //this.props.handleNewTodoChange(e.target.value)
     this.props.handleNewTodoChange(e)
+    this.setState({brand: e})
   }
 
   handleAddButtonClick(e) {
@@ -245,21 +254,22 @@ class TodoAdd extends React.Component {
     return (
       <form >
         <FormGroup>
-          <Autosuggest inline
+          <Autosuggest
             datalist={ carBrands }
             value={this.props.newTodoText}
             onChange={this.handleNewTodoChange}
             placeholder="Enter a car brand"
           />
           {' '}
-          <Autosuggest inline
-            datalist={ brandModels }
+          <Autosuggest
+            datalist={ this.state.cars }
             value={this.props.carModel}
             onChange={this.handleCarModelChange}
+            onSearch={this.getModelsForBrand}
             placeholder="Enter a car model"
           />
           {' '}
-          <Button inline type="submit"
+          <Button  type="submit"
                   bsStyle="primary"
                   onClick={this.handleAddButtonClick}>Add</Button>
 
